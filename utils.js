@@ -1,13 +1,5 @@
-function compareAlphabetically(a, b) {
-    const titleA = a.title.toLowerCase();
-    const titleB = b.title.toLowerCase();
-    let comparison = 0;
-    if (titleA > titleB) {
-        comparison = 1;
-    } else if (titleA < titleB) {
-        comparison = -1;
-    }
-    return comparison;
+function compareTitle(a, b) {
+    return a.title >= b.title ? 1 : -1;
 };
 
 function compareCreatedTime(a, b) {
@@ -18,23 +10,23 @@ function compareModifiedTime(a, b){
     return a.modifiedDate - b.modifiedDate;
 }
 
-function formatDate(date) {
+function formatDateHtml(date) {
     return `${date.getHours()}:${date.getMinutes()} <br> ${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
 }
 
-function isValidName(name) {
+function isValidTitle(name) {
     const VALID_NAME_REGEX = /^[a-zA-Z\w\s]+$/;
     return name.match(VALID_NAME_REGEX);
 }
 
-function highlight(content, searchText) {
+function highlightHtml(content, searchText) {
     let searchExp = new RegExp(searchText, `ig`);
     let matches = content.match(searchExp);
     if (matches) content = content.replace(matches[0], `<span class='highlight'>` + matches[0] + `</span>`)
     return content;
 }
 
-function filterRelLink(link){
+function getTitleFromLink(link){
     return link.trim().substr(2);
 }
 

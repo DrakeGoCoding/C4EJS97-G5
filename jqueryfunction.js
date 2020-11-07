@@ -54,7 +54,7 @@ $('#new-folder-name').keyup(function (e) {
         $('.new-folder-alert-error').text(`A folder name must be provided!`);
         $('.new-folder-alert-error').show();
     }
-    else if (!isValidName(newFolderTitle)) {
+    else if (!isValidTitle(newFolderTitle)) {
         $('#new-folder-name').addClass("border-danger");
         $('.new-folder-alert-error').text(`Folder name must contain only characters, numeric digits and underscore!`);
         $('.new-folder-alert-error').show();
@@ -79,7 +79,7 @@ $('#new-file-name').keyup(function (e) {
         $('.new-file-alert-error').text(`A file name must be provided!`);
         $('.new-file-alert-error').show();
     }
-    else if (!isValidName(newFileTitle)) {
+    else if (!isValidTitle(newFileTitle)) {
         $('#new-file-name').addClass("border-danger");
         $('.new-file-alert-error').text(`File name must contain only characters, numeric digits and underscore!`);
         $('.new-file-alert-error').show();
@@ -97,7 +97,6 @@ function toggleTreeView() {
 }
 
 function openTreeView() {
-    updateTreeView();
     $('.repo-zone').show();
     $('.relative-link').css('width', '85vw');
     $('.detail-zone').css({
@@ -117,27 +116,27 @@ function hideTreeView() {
     isTreeViewDisplayed = false;
 }
 
-function toggleSortNote(){
+function toggleSortNote() {
     if (!isNoteListSorted) sortFile();
-    else unSortFile();
+    else unsortFile();
 }
 
 function sortFile() {
-    let folderTitle = filterRelLink($('.relative-link .folder-link').text());
-    let fileTitle = filterRelLink($('.relative-link .file-link').text());
+    let folderTitle = getTitleFromLink($('.relative-link .folder-link').text());
+    let fileTitle = getTitleFromLink($('.relative-link .file-link').text());
     let folder = currentUser.findFolder(folderTitle);
     let file = currentUser.findFile(fileTitle);
-    file.sortByTitle();
+    file.sortNotesByTitle();
     displayFile(folder, file);
     isNoteListSorted = true;
 }
 
-function unSortFile(){
-    let folderTitle = filterRelLink($('.relative-link .folder-link').text());
-    let fileTitle = filterRelLink($('.relative-link .file-link').text());
+function unsortFile() {
+    let folderTitle = getTitleFromLink($('.relative-link .folder-link').text());
+    let fileTitle = getTitleFromLink($('.relative-link .file-link').text());
     let folder = currentUser.findFolder(folderTitle);
     let file = currentUser.findFile(fileTitle);
-    file.sortByCreatedDate();
+    file.sortNotesByCreatedDate();
     displayFile(folder, file);
     isNoteListSorted = false;
 }
@@ -149,11 +148,11 @@ function fillFolderOption() {
     })
     $('#folder-select').html(stringHtml);
     if ($('.relative-link .folder-link').length > 0) {
-        let folderLink = filterRelLink($('.relative-link .folder-link').text());
+        let folderLink = getTitleFromLink($('.relative-link .folder-link').text());
         $('#folder-select').val(folderLink);
         $('#new-file-name').show();
         $('#add-file-btn').show();
-        setTimeout(function(){
+        setTimeout(function () {
             $('#new-file-name').focus();
         }, 500);
     }
@@ -161,7 +160,7 @@ function fillFolderOption() {
         if ($('#folder-select').val() !== "") {
             $('#new-file-name').show();
             $('#add-file-btn').show();
-            setTimeout(function(){
+            setTimeout(function () {
                 $('#new-file-name').focus();
             }, 500);
         }
@@ -185,7 +184,7 @@ function enterNoteTitle() {
         $('.new-note-alert-error').text(`A note name must be provided!`);
         $('.new-note-alert-error').show();
     }
-    else if (!isValidName(newNoteTitle)) {
+    else if (!isValidTitle(newNoteTitle)) {
         $(this).addClass("border-danger");
         $('.new-note-alert-error').text(`Note name must contain only characters, numeric digits and underscore!`);
         $('.new-note-alert-error').show();
@@ -244,14 +243,14 @@ $(document).ready(function () {
     });
 
     $(document).keydown(function (e) {
-        if (ctrlDown && (e.keyCode == spaceKey)){
-            if ($('.folder-link').length === 0 && $('.file-link').length === 0){
+        if (ctrlDown && (e.keyCode == spaceKey)) {
+            if ($('.folder-link').length === 0 && $('.file-link').length === 0) {
                 $('#new-folder-btn').click();
             }
-            if ($('.folder-link').length > 0 && $('.file-link').length === 0){
+            if ($('.folder-link').length > 0 && $('.file-link').length === 0) {
                 $('#new-file-btn').click();
             }
-            if ($('.file-link').length > 0){
+            if ($('.file-link').length > 0) {
                 $('#add-note-btn').click();
             }
         }

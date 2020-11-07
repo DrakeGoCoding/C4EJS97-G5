@@ -7,12 +7,12 @@ let noteListZone = document.getElementsByClassName("note-list")[0];
 function addNewFolder() {
     let newFolderTitle = $('#new-folder-name').val().trim();
     let findFolder = currentUser.findFolder(newFolderTitle);
-    if (!findFolder && newFolderTitle.length !== 0 && isValidName(newFolderTitle)) {
+    if (!findFolder && newFolderTitle.length !== 0 && isValidTitle(newFolderTitle)) {
         let newFolder = new Folder(newFolderTitle);
         currentUser.addFolder(newFolder);
-        $('.new-folder-alert-success').text(`A new folder ${newFolderTitle} is added successfully!`);
+        $('.new-folder-alert-success').text(`A new folder "${newFolderTitle}" is added successfully!`);
         $('.new-folder-alert-success').show();
-        setTimeout(function () {
+        setTimeout(() => {
             updateTreeView();
             displayRepository(currentUser);
             $('#newFolderWindow').modal('hide');
@@ -25,10 +25,10 @@ function addNewFile() {
     let newFileTitle = $('#new-file-name').val().trim();
     let findFolder = currentUser.findFolder(folderTitle);
     let findFile = currentUser.findFile(newFileTitle);
-    if (!findFile && newFileTitle.length !== 0 && isValidName(newFileTitle)) {
+    if (!findFile && newFileTitle.length !== 0 && isValidTitle(newFileTitle)) {
         let newFile = new File(newFileTitle);
         findFolder.addFile(newFile);
-        $('.new-file-alert-success').text(`A new file ${newFileTitle} is added to folder ${findFolder.title} successfully!`);
+        $('.new-file-alert-success').text(`A new file "${newFileTitle}" is added to folder ${findFolder.title} successfully!`);
         $('.new-file-alert-success').show();
         setTimeout(function () {
             updateTreeView();
@@ -41,11 +41,11 @@ function addNewFile() {
 function addNewNote() {
     if ($("#new-note").length === 0) {
         if (!isTreeViewDisplayed) openTreeView();
-        let allNoteToggler = document.getElementsByClassName('fa-globe-europe')[0].parentElement.getElementsByClassName('fa-angle-right')[0];
         let date = new Date();
         let img = autoGenerateImg();
-        let folder = currentUser.findFolder(filterRelLink($('.relative-link .folder-link').text()))
-        let file = folder.findFile(filterRelLink($('.relative-link .file-link').text()));
+        let folder = currentUser.findFolder(getTitleFromLink($('.relative-link .folder-link').text()))
+        let file = currentUser.findFile(getTitleFromLink($('.relative-link .file-link').text()));
+        let allNoteToggler = document.getElementsByClassName('fa-globe-europe')[0].parentElement.getElementsByClassName('fa-angle-right')[0];
         if (!allNoteToggler.parentElement.parentElement.querySelector(".hidden").classList.contains("active")) {
             allNoteToggler.parentElement.parentElement.querySelector(".hidden").classList.toggle("active");
             allNoteToggler.classList.toggle("fa-angle-down");
@@ -54,10 +54,10 @@ function addNewNote() {
             <div class="note-container my-5" id="new-note">
                 <div class="note-left-col align-items-center">
                     <img class="note-img" src="${img}" alt="note img">
-                    <p class='note-date text-center'>${formatDate(date)}</p>
+                    <p class='note-date text-center'>${formatDateHtml(date)}</p>
                 </div>
                 <div class="note-right-col">
-                    <input class="form-control bg-light w-100" type="text" placeholder="Note Title" id="new-note-title"> 
+                    <input class="form-control bg-light w-100" type="text" placeholder="Note Title" id="new-note-title" onkeyup="enterNoteTitle()"> 
                     <div class='note-link my-3'>
                         <input class="form-control text-primary" type="text" placeholder="Attach Your Link Here" id="new-note-link"> 
                     </div>
@@ -74,14 +74,13 @@ function addNewNote() {
                 </div>
             </div>
         `;
-        $("#new-note")[0].scrollIntoView({ behavior: "smooth", block: "center" })
-        $('#new-note-title').keyup(enterNoteTitle);
-        $('#save-new-note-btn').click(function () {
+        $("#new-note")[0].scrollIntoView({ behavior: "smooth", block: "center" });
+        $('#save-new-note-btn').click(() => {
             let newNoteTitle = $("#new-note-title").val().trim();
             let newNoteLink = $("#new-note-link").val();
             let newNoteContent = $("#new-note-content").val();
             let findNote = currentUser.findNote(newNoteTitle);
-            if (newNoteTitle.length !== 0 && isValidName(newNoteTitle) && !findNote) {
+            if (newNoteTitle.length !== 0 && isValidTitle(newNoteTitle) && !findNote) {
                 let newNote = new Note(newNoteTitle, newNoteLink, newNoteContent);
                 newNote.modifiedDate = date;
                 newNote.img = img;
@@ -91,7 +90,7 @@ function addNewNote() {
                 $(".note-container")[0].scrollIntoView({ behavior: "smooth", block: "center" });
             }
         })
-        $('#delete-new-note-btn').click(function () {
+        $('#delete-new-note-btn').click(() => {
             updateTreeView();
             displayFile(folder, file);
         })
@@ -104,7 +103,7 @@ function displayRepository(user) {
     $('.file-detail').hide();
     $('.folder-detail').hide();
     $('.folder-list').html('');
-    $('.relative-link').html(`<div class="repo-link">&gt; Repository</div>`)
+    $('.relative-link').html(`<div class="repo-link">&gt; Repository</div>`);
     let folderList = user.repository;
     folderList.forEach((folder) => {
         folderListZone.innerHTML += `
@@ -119,9 +118,7 @@ function displayRepository(user) {
     let folderDivs = document.getElementsByClassName("folder-inside");
     for (let i = 0; i < folderDivs.length; i++) {
         let folderDiv = folderDivs[i];
-        folderDiv.ondblclick = () => {
-            displayFolder(folderList[i]);
-        }
+        folderDiv.ondblclick = () => displayFolder(folderList[i]);
         folderDiv.oncontextmenu = (e) => {
             let repoZoneWidth = 0;
             if (isTreeViewDisplayed) repoZoneWidth = $('.repo-zone').width();
@@ -142,7 +139,7 @@ function displayRepository(user) {
                 $('#new-folder-title').focus().select().keyup(function (e) {
                     let newFolderTitle = $('#new-folder-title').val().trim();
                     let findFolder = user.findFolder(newFolderTitle);
-                    if (findFolder || newFolderTitle.length === 0 || !isValidName(newFolderTitle)) $('#new-folder-title').addClass("border-danger");
+                    if (findFolder || newFolderTitle.length === 0 || !isValidTitle(newFolderTitle)) $('#new-folder-title').addClass("border-danger");
                     else {
                         $('#new-folder-title').removeClass("border-danger");
                         if (e.key === "Enter") {
@@ -152,9 +149,7 @@ function displayRepository(user) {
                         }
                     }
                 })
-                folderDiv.onclick = function () {
-                    displayRepository(user)
-                }
+                folderDiv.onclick = () => displayRepository(user);
             })
             return false;
         }
@@ -185,9 +180,7 @@ function displayFolder(folder) {
     let fileDivs = document.getElementsByClassName("file-inside");
     for (let i = 0; i < fileDivs.length; i++) {
         let fileDiv = fileDivs[i];
-        fileDiv.ondblclick = () => {
-            displayFile(folder, fileList[i]);
-        }
+        fileDiv.ondblclick = () => displayFile(folder, fileList[i]);
         fileDiv.oncontextmenu = (e) => {
             let repoZoneWidth = 0;
             if (isTreeViewDisplayed) repoZoneWidth = $('.repo-zone').width();
@@ -208,7 +201,7 @@ function displayFolder(folder) {
                 $('#new-file-title').focus().select().keyup(function (e) {
                     let newFileTitle = $('#new-file-title').val().trim();
                     let findFile = folder.findFile(newFileTitle);
-                    if (findFile || newFileTitle.length === 0 || !isValidName(newFileTitle)) $('#new-file-title').addClass("border-danger");
+                    if (findFile || newFileTitle.length === 0 || !isValidTitle(newFileTitle)) $('#new-file-title').addClass("border-danger");
                     else {
                         $('#new-file-title').removeClass("border-danger");
                         if (e.key === "Enter") {
@@ -218,9 +211,7 @@ function displayFolder(folder) {
                         }
                     }
                 })
-                fileDiv.onclick = function () {
-                    displayFolder(folder);
-                }
+                fileDiv.onclick = () => displayFolder(folder);
             })
             return false;
         }
@@ -228,10 +219,10 @@ function displayFolder(folder) {
 }
 
 function displayFile(folder, file) {
-    let noteList = file.noteList;
     $('.repo-detail').hide();
     $('.folder-detail').hide();
     $('.file-detail').show();
+    $('.note-list').html('');
     $('.relative-link').html(`
         <div class="repo-link">&gt; Repository</div>
         <div class="folder-link">&gt; ${folder.title}</div> &nbsp;
@@ -239,13 +230,13 @@ function displayFile(folder, file) {
     `);
     $('.repo-link').click(() => displayRepository(currentUser));
     $('.folder-link').click(() => displayFolder(folder));
-    noteListZone.innerHTML = "";
+    let noteList = file.noteList;
     noteList.forEach((note) => {
         noteListZone.innerHTML += `
             <div class="shadow note-container my-5">
                 <div class="note-left-col align-items-center">
                     <img class="note-img" src="${note.img}" alt="note img">
-                    <p class='note-date text-center'>${formatDate(note.modifiedDate)}</p>
+                    <p class='note-date text-center'>${formatDateHtml(note.modifiedDate)}</p>
                 </div>
                 <div class="note-right-col">
                     <h3 class='note-title font-weight-bold'>${note.title}</h3>       
@@ -264,8 +255,8 @@ function displayFile(folder, file) {
     let deleteBtns = document.getElementsByClassName("delete-note-btn");
     let editBtns = document.getElementsByClassName("edit-note-btn");
     for (let i = 0; i < deleteBtns.length; i++) {
-        deleteBtns[i].onclick = function () {
-            $('#delete-note').click(function () {
+        deleteBtns[i].onclick = () => {
+            $('#delete-note').click(() => {
                 file.deleteNote(noteList[i]);
                 updateTreeView();
                 displayFile(folder, file);
@@ -274,17 +265,17 @@ function displayFile(folder, file) {
         }
     }
     for (let i = 0; i < editBtns.length; i++) {
-        editBtns[i].onclick = function () {
+        editBtns[i].onclick = () => {
             let noteContainer = editBtns[i].parentElement.parentElement;
             let note = noteList[i];
-            let modifiedDate = new Date();
+            note.modifiedDate = new Date();
             noteContainer.innerHTML = `
                 <div class="note-left-col align-items-center">
                     <img class="note-img" src="${note.img}" alt="note img">
-                    <p class='note-date text-center'>${formatDate(modifiedDate)}</p>
+                    <p class='note-date text-center'>${formatDateHtml(note.modifiedDate)}</p>
                 </div>
                 <div class="note-right-col">
-                    <input class="form-control bg-light w-100" type="text" placeholder="Note Title" id="new-note-title" value="${note.title}"> 
+                    <input class="form-control bg-light w-100" type="text" placeholder="Note Title" id="new-note-title" value="${note.title}" onkeyup="enterNoteTitle()"> 
                     <div class='note-link my-3'>
                         <input class="form-control text-primary" type="text" placeholder="Attach Your Link Here" id="new-note-link" value="${note.attachedLink}"> 
                     </div>
@@ -297,17 +288,15 @@ function displayFile(folder, file) {
                     <div class="fas fa-trash" id="delete-new-note-btn"></div>
                 </div>
             `
-            $('#new-note-title').keyup(enterNoteTitle);
-            $('#save-new-note-btn').click(function () {
+            $('#save-new-note-btn').click(() => {
                 let newNoteTitle = $("#new-note-title").val().trim();
                 let newNoteLink = $("#new-note-link").val();
                 let newNoteContent = $("#new-note-content").val();
                 let findNote = currentUser.findNote(newNoteTitle);
-                if (newNoteTitle.length !== 0 && isValidName(newNoteTitle) && (!findNote || newNoteTitle === note.title)) {
+                if (newNoteTitle.length !== 0 && isValidTitle(newNoteTitle) && (!findNote || newNoteTitle === note.title)) {
                     note.title = newNoteTitle;
                     note.attachedLink = newNoteLink;
                     note.content = newNoteContent;
-                    note.modifiedDate = modifiedDate;
                     updateTreeView();
                     displayFile(folder, file);
                     $(".note-container")[i].scrollIntoView({ behavior: "smooth", block: "center" });
@@ -327,58 +316,58 @@ function displayFile(folder, file) {
 }
 
 function displaySearchResult(folder, file) {
-    let searchInput = $("#key-search").val().trim().toLowerCase();
     $('.repo-detail').hide();
     $('.folder-detail').hide();
     $('.file-detail').show();
-    let noteSearchList = file.searchNote(searchInput);
-    noteListZone.innerHTML = "";
-    for (let i = 0; i < noteSearchList.length; i++) {
-        let note = noteSearchList[i];
-        let noteContent = highlight(note.content, searchInput);
-        let noteTitle = highlight(note.title, searchInput);
-        let noteModifiedDate = highlight(formatDate(note.modifiedDate), searchInput);
+    $('.note-list').html('');
+    let searchInput = $("#key-search").val().trim().toLowerCase();
+    let filteredNoteList = file.filterNoteListBy(searchInput);
+    for (let i = 0; i < filteredNoteList.length; i++) {
+        let note = filteredNoteList[i];
+        let noteContent = highlightHtml(note.content, searchInput);
+        let noteTitle = highlightHtml(note.title, searchInput);
+        let noteModifiedDate = highlightHtml(formatDateHtml(note.modifiedDate), searchInput);
         noteListZone.innerHTML += `
-        <div class="note-container my-5">
-            <div class="note-left-col align-items-center">
-                <img class="note-img" src="${note.img}" alt="note img">
-                <p class='note-date text-center'>${noteModifiedDate}</p>
-            </div>
-            <div class="note-right-col">
-                <h3 class='note-title font-weight-bold'>${noteTitle}</h3>       
-                <div class='note-link mt-3'>
-                    <a href="${note.attachedLink}" target="_blank">Source Link</a>
+            <div class="note-container my-5">
+                <div class="note-left-col align-items-center">
+                    <img class="note-img" src="${note.img}" alt="note img">
+                    <p class='note-date text-center'>${noteModifiedDate}</p>
                 </div>
-                <div class='note-content'>${noteContent}</div>
-            </div>
-            <div class="note-btns">
+                <div class="note-right-col">
+                    <h3 class='note-title font-weight-bold'>${noteTitle}</h3>       
+                    <div class='note-link mt-3'>
+                        <a href="${note.attachedLink}" target="_blank">Source Link</a>
+                    </div>
+                    <div class='note-content'>${noteContent}</div>
+                </div>
+                <div class="note-btns">
                     <div class="fas fa-edit edit-note-btn"></div>
                     <div class="fas fa-trash delete-note-btn" data-toggle="modal" data-target="#deleteNoteConfirm"></div>
+                </div>
             </div>
-        </div>
         `;
     }
     let deleteBtns = document.getElementsByClassName("delete-note-btn");
-    let editBtns = document.getElementsByClassName("edit-note-btn");
     for (let i = 0; i < deleteBtns.length; i++) {
-        deleteBtns[i].onclick = function () {
-            $('#delete-note').click(function () {
-                file.deleteNote(noteSearchList[i]);
+        deleteBtns[i].onclick = () => {
+            $('#delete-note').click(() => {
+                file.deleteNote(filteredNoteList[i]);
                 updateTreeView();
                 displaySearchResult(folder, file);
                 $("#deleteNoteConfirm").modal("hide");
             })
         }
     }
+    let editBtns = document.getElementsByClassName("edit-note-btn");
     for (let i = 0; i < editBtns.length; i++) {
-        editBtns[i].onclick = function () {
+        editBtns[i].onclick = () => {
             let noteContainer = editBtns[i].parentElement.parentElement;
-            let note = noteSearchList[i];
-            let modifiedDate = new Date();
+            let note = filteredNoteList[i];
+            note.modifiedDate = new Date();
             noteContainer.innerHTML = `
                 <div class="note-left-col align-items-center">
                     <img class="note-img" src="${note.img}" alt="note img">
-                    <p class='note-date text-center'>${formatDate(modifiedDate)}</p>
+                    <p class='note-date text-center'>${formatDateHtml(note.modifiedDate)}</p>
                 </div>
                 <div class="note-right-col">
                     <input class="form-control bg-light w-100" type="text" placeholder="Note Title" id="new-note-title" value="${note.title}"> 
@@ -395,23 +384,22 @@ function displaySearchResult(folder, file) {
                 </div>
             `
             $('#new-note-title').keyup(enterNoteTitle);
-            $('#save-new-note-btn').click(function () {
+            $('#save-new-note-btn').click(() => {
                 let newNoteTitle = $("#new-note-title").val().trim();
                 let newNoteLink = $("#new-note-link").val();
                 let newNoteContent = $("#new-note-content").val();
                 let findNote = currentUser.findNote(newNoteTitle);
-                if (newNoteTitle.length !== 0 && isValidName(newNoteTitle) && (!findNote || newNoteTitle === note.title)) {
+                if (newNoteTitle.length !== 0 && isValidTitle(newNoteTitle) && (!findNote || newNoteTitle === note.title)) {
                     note.title = newNoteTitle;
                     note.attachedLink = newNoteLink;
                     note.content = newNoteContent;
-                    note.modifiedDate = modifiedDate;
                     updateTreeView();
                     displaySearchResult(folder, file);
                     $(".note-container")[i].scrollIntoView({ behavior: "smooth", block: "center" });
                 }
             })
-            $('#delete-new-note-btn').click(function () {
-                file.deleteNote(noteSearchList[i]);
+            $('#delete-new-note-btn').click(() => {
+                file.deleteNote(filteredNoteList[i]);
                 updateTreeView();
                 displaySearchResult(folder, file);
             })
@@ -515,19 +503,20 @@ function updateTreeView() {
     currentUser.updateAllFiles();
     currentUser.updateAllNotes();
     currentUser.updateRecentNotes();
-    fillAllFileTree(currentUser.allFileList);
-    fillAllNoteTree(currentUser.allNoteList);
-    fillRecentNoteTree(currentUser.recentNoteList);
-    fillRepoTree(currentUser.repository);
     updateCurrentUserJSON();
-    updateHTML();
+    updateTreeViewHTML();
 }
 
-function updateHTML() {
+function updateTreeViewHTML() {
     let nestedTogglers = document.getElementsByClassName("fa-angle-right");
     let folderTreeDivs = document.getElementsByClassName("folder-tree");
     let fileTreeDivs = document.getElementsByClassName("file-tree");
     let noteTreeDivs = document.getElementsByClassName('note-tree');
+
+    fillAllFileTree(currentUser.allFileList);
+    fillAllNoteTree(currentUser.allNoteList);
+    fillRecentNoteTree(currentUser.recentNoteList);
+    fillRepoTree(currentUser.repository);
 
     for (nestedToggler of nestedTogglers) {
         nestedToggler.onclick = function () {
@@ -537,9 +526,8 @@ function updateHTML() {
     }
 
     for (folderTreeDiv of folderTreeDivs) {
-        let folderName = folderTreeDiv.innerText.trim();
         folderTreeDiv.ondblclick = function () {
-            let folder = currentUser.findFolder(folderName);
+            let folder = currentUser.findFolder(folderTreeDiv.innerText.trim());
             if (folder) {
                 $('.folder-detail').show();
                 $('.file-detail').hide();
@@ -553,10 +541,9 @@ function updateHTML() {
     }
 
     for (fileTreeDiv of fileTreeDivs) {
-        let fileName = fileTreeDiv.innerText.trim();
-        let file = currentUser.findFile(fileName);
+        let file = currentUser.findFile(fileTreeDiv.innerText.trim());
         let folder = file.findFolder(currentUser);
-        fileTreeDiv.setAttribute("title", `\\${folder.title}`)
+        fileTreeDiv.setAttribute("title", `\\${folder.title}\\${file.title}`)
         fileTreeDiv.ondblclick = function () {
             displayFile(folder, file);
             this.parentElement.querySelector(".hidden").classList.toggle("active");
@@ -564,15 +551,14 @@ function updateHTML() {
     }
 
     for (noteTreeDiv of noteTreeDivs) {
-        let noteTitle = noteTreeDiv.innerText;
-        let note = currentUser.findNote(noteTitle);
+        let note = currentUser.findNote(noteTreeDiv.innerText.trim());
         let file = note.findFile(currentUser);
         let folder = note.findFolder(currentUser);
-        noteTreeDiv.setAttribute("title", `\\${folder.title}\\${file.title}`)
+        noteTreeDiv.setAttribute("title", `\\${folder.title}\\${file.title}\\${note.title}`)
         noteTreeDiv.onclick = function () {
             displayFile(folder, file);
             let noteDivs = document.getElementsByClassName('note-container');
-            let findNoteDiv = Array(...noteDivs).find(function (noteDiv) {
+            let findNoteDiv = Array(...noteDivs).find((noteDiv) => {
                 let noteTitleDiv = noteDiv.querySelector(".note-title");
                 return noteTitleDiv.innerText.trim() === noteTitle;
             })
@@ -581,22 +567,22 @@ function updateHTML() {
     }
 }
 
-function findFolderTreeDiv(folderTitle) {
-    let folderTreeDivs = document.getElementsByClassName("folder-tree");
-    folderTreeDivs = new Array(...folderTreeDivs);
-    return folderTreeDivs.find((folderTreeDiv) => {
-        return folderTreeDiv.innerText.trim() === folderTitle;
-    })
-}
+// function findFolderTreeDiv(folderTitle) {
+//     let folderTreeDivs = document.getElementsByClassName("folder-tree");
+//     folderTreeDivs = new Array(...folderTreeDivs);
+//     return folderTreeDivs.find((folderTreeDiv) => {
+//         return folderTreeDiv.innerText.trim() === folderTitle;
+//     })
+// }
 
-function findFileTreeDiv(folderTitle, fileTitle) {
-    let folderTreeDiv = findFolderTreeDiv(folderTitle);
-    let fileTreeDivs = folderTreeDiv.parentElement.getElementsByClassName("file-tree");
-    fileTreeDivs = new Array(...fileTreeDivs);
-    return fileTreeDivs.find((fileTreeDiv) => {
-        return fileTreeDiv.innerText.trim() === fileTitle;
-    })
-}
+// function findFileTreeDiv(folderTitle, fileTitle) {
+//     let folderTreeDiv = findFolderTreeDiv(folderTitle);
+//     let fileTreeDivs = folderTreeDiv.parentElement.getElementsByClassName("file-tree");
+//     fileTreeDivs = new Array(...fileTreeDivs);
+//     return fileTreeDivs.find((fileTreeDiv) => {
+//         return fileTreeDiv.innerText.trim() === fileTitle;
+//     })
+// }
 
 function logOut() {
     usersJSON = usersJSON.filter((user) => {
@@ -605,11 +591,12 @@ function logOut() {
     usersJSON.push(JSON.parse(JSON.stringify(currentUser)));
     localStorage.setItem('users', JSON.stringify(usersJSON));
     localStorage.removeItem('currentUser');
-    window.location = "index.html";
+    window.location = "login.html";
 }
 
 function initUserPage(user) {
     displayRepository(user);
+    updateTreeView();
     $('#user-name').text(`Welcome, ${user.userName}!`);
 }
 

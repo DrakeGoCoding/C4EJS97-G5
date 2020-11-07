@@ -19,15 +19,6 @@ class User {
         })
     }
 
-    sortByTitle() {
-        this.repository.sort(compareAlphabetically)
-    }
-
-    sortByCreatedDate() {
-        this.repository.sort(compareCreatedTime);
-    }
-
-    // Everytime an action of modification happens, we run these 3 methods
     updateAllNotes() {
         let newNoteList = [];
         this.repository.forEach((folder) => {
@@ -39,15 +30,17 @@ class User {
         })
         this.allNoteList = newNoteList;
     }
+
     updateAllFiles() {
         let newFileList = [];
         this.repository.forEach((folder) => {
-            folder.fileList.forEach((file) =>{
+            folder.fileList.forEach((file) => {
                 newFileList.push(file);
             })
         })
         this.allFileList = newFileList;
     }
+
     updateRecentNotes() {
         const LIMIT = 10;
         let sortedAllNoteList = this.allNoteList;
@@ -59,44 +52,29 @@ class User {
         }
     }
 
-    findFolder(input) {
+    findFolder(title) {
+        return this.repository.find((folder) => {
+            return folder.title === title;
+        })
+    }
+
+    findFile(title) {
         for (let i = 0; i < this.repository.length; i++) {
-            let folder = this.repository[i];
-            if (folder["title"].toLowerCase() === input.toLowerCase()) {
-                return folder;
-            }
+            let file = this.repository[i].findFile(title);
+            if (file) return file;
         }
         return null;
     }
 
-    findFile(input){
-        for (let i = 0 ; i < this.repository.length ; i++){
-            let folder = this.repository[i];
-            for (let j = 0 ; j < folder.fileList.length ;j++){
-                let file = folder.fileList[j];
-                if (file["title"].toLowerCase() === input.toLowerCase()){
-                    return file;
-                }
-            }
-        }
-        return null;
-    }
-
-    findNote(input) {
+    findNote(title) {
         for (let i = 0; i < this.repository.length; i++) {
-            let folder = this.repository[i];
-            for (let j = 0; j < folder.fileList.length; j++) {
-                let file = folder.fileList[j];
-                for (let k = 0; k < file.noteList.length; k++) {
-                    let note = file.noteList[k];
-                    if (note.title.toLowerCase() === input.toLowerCase()) return note;
-                }
-            }
+            let note = this.repository[i].findNote(title);
+            if (note) return note;
         }
         return null;
     }
 
-    parse(jsonUser){
+    parse(jsonUser) {
         let user = new User(jsonUser.userName, jsonUser.password);
         user.createdDate = new Date(jsonUser.createdDate);
         jsonUser.allNoteList.forEach((note) => {
@@ -129,32 +107,21 @@ class Folder {
         })
     }
 
-    sortByTitle() {
-        this.fileList.sort(compareAlphabetically)
+    findFile(title) {
+        return this.fileList.find((file) => {
+            return file.title === title;
+        })
     }
 
-    sortByCreatedDate() {
-        this.fileList.sort(compareCreatedTime);
-    }
-
-    moveFile(file, newFolder) {
-        newFolder.addFile(file);
-        this.deleteFile(file);
-
-    }
-
-    findFile(input) {
+    findNote(title) {
         for (let i = 0; i < this.fileList.length; i++) {
-            input = input.toLowerCase();
-            let file = this.fileList[i];
-            if (file["title"].toLowerCase() === input) {
-                return file;
-            }
+            let note = this.fileList[i].findNote(title);
+            if (note) return note;
         }
         return null;
     }
 
-    parse(jsonFolder){
+    parse(jsonFolder) {
         let folder = new Folder(jsonFolder.title);
         folder.createdDate = new Date(folder.createdDate);
         jsonFolder.fileList.forEach((file) => {
@@ -181,45 +148,38 @@ class File {
         })
     }
 
-    sortByTitle() {
-        this.noteList.sort(compareAlphabetically)
+    sortNotesByTitle() {
+        this.noteList.sort(compareTitle)
     }
 
-    sortByCreatedDate() {
+    sortNotesByCreatedDate() {
         this.noteList.sort(compareCreatedTime);
     }
 
-    sortByModifiedDate() {
-        this.noteList.sort(compareModifiedTime);
-    }
-
-    findFolder(user){
-        for (let i = 0 ; i < user.repository.length ; i++){
+    findFolder(user) {
+        for (let i = 0; i < user.repository.length; i++) {
             let folder = user.repository[i];
-            for (let j = 0 ; j < folder.fileList.length ; j++){
-                let file = folder.fileList[j];
-                if (file.title === this.title) return folder;
-            }
+            if (folder.findFile(this.title)) return folder;
         }
         return null;
     }
 
-    findNote(input) {
+    findNote(title) {
         return this.noteList.find((note) => {
-            return note.title.toLowerCase() === input.toLowerCase();
+            return note.title === title;
         })
     }
 
-    searchNote(input) {
+    filterNoteListBy(input) {
         return this.noteList.filter((note) => {
             let title = note.title.toLowerCase();
             let content = note.content.toLowerCase();
-            let date = formatDate(note["createdDate"]);
+            let date = formatDateHtml(note.modifiedDate);
             return title.includes(input) || content.includes(input) || date.includes(input);
         })
     }
 
-    parse(jsonFile){
+    parse(jsonFile) {
         let file = new File(jsonFile.title);
         file.createdDate = new Date(file.createdDate);
         jsonFile.noteList.forEach((note) => {
@@ -239,37 +199,26 @@ class Note {
         this.img = autoGenerateImg();
     }
 
+    findFolder(user) {
+        for (let i = 0; i < user.repository.length; i++) {
+            let folder = user.repository[i];
+            if (folder.findNote(this.title)) return folder;
+        }
+        return null;
+    }
+
     findFile(user) {
         for (let i = 0; i < user.repository.length; i++) {
             let folder = user.repository[i];
             for (let j = 0; j < folder.fileList.length; j++) {
                 let file = folder.fileList[j];
-                for (let k = 0; k < file.noteList.length; k++) {
-                    let note = file.noteList[k];
-                    if (note.title === this.title)
-                        return file;
-                }
+                if (file.findNote(this.title)) return file;
             }
         }
         return null;
     }
 
-    findFolder(user) {
-        for (let i = 0; i < user.repository.length; i++) {
-            let folder = user.repository[i];
-            for (let j = 0; j < folder.fileList.length; j++) {
-                let file = folder.fileList[j];
-                for (let k = 0; k < file.noteList.length; k++) {
-                    let note = file.noteList[k];
-                    if (note.title === this.title)
-                        return folder;
-                }
-            }
-        }
-        return null;
-    }
-
-    parse(jsonNote){
+    parse(jsonNote) {
         let note = new Note(jsonNote.title, jsonNote.attachedLink, jsonNote.content);
         note.createdDate = new Date(jsonNote.createdDate);
         return note;
